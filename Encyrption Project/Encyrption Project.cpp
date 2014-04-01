@@ -113,13 +113,15 @@ float EndTimer(clock_t clockTimeFromStartTimer)
 //				Boot Necesary Information:
 void BootSystem()
 {
+	clock_t BootTime1 = StartTimer();
 	for (int configCount = 1; configCount <= ConfigMemoryMaxLines; configCount++)
 	{
 		ConfigLineMemory[configCount] = "Null";
 	}
 
 	LoadConfiguration();
-
+	clock_t BootTime2 = StartTimer();
+	
 	// Integers from Config
 	start_key_length = RetrieveVarFromConfigINT("start_key_length");
 	key_expansion_enabled = RetrieveVarFromConfigINT("key_expansion_enabled");
@@ -129,7 +131,7 @@ void BootSystem()
 	//Floats from Config
 
 	//Strings from Config
-
+	printf("%10.5f, %.10f\n", EndTimer(BootTime1), EndTimer(BootTime2));
 }
 
 
