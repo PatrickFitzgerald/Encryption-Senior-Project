@@ -1,0 +1,20 @@
+**************************     Configuration File     **************************
+* * * * * * * * * * * * *   Data Encryption Software   * * * * * * * * * * * * *
+                             * Patrick Fitzgerald *
+
+
+                             
+  *   *   *   *   *   *   *   * Default Settings *   *   *   *   *   *   *   *  
+
+File data:   --Must be set to manipulate the correct files. 
+			 --Must have file extension included.
+
+file_path = testfile.txt
+
+
+Key length defaults:
+
+start_key_length = 10
+key_expansion_enabled = 0
+expanded_key_length = 30
+key_expansion_method = 1
