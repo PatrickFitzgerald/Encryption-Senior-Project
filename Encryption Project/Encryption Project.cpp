@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <fstream>
 #include <iostream>
+#include <istream>
 #include <string>
 #include "time.h"
 #include <bitset>
@@ -15,9 +16,13 @@ const int ConfigMemoryMaxLines = 1024;
 const int FileDataMemoryMaxLines = 4096;
 const int BitsPerCharacter = 8;
 const int MaxCharactersPerLine = 8192;
-const int BitsPerKey = 8;
+const int BitsInKey = 8;
+
+bool programStatusHealthy = true;
 
 string configLineDelineator = " = ";
+string fileExtensionENC = ".enc";
+string fileExtensionKEY = ".key";
 string nullString = "Null";
 int nullInt = -347;
 float nullFloat = -22.459;
@@ -53,7 +58,7 @@ bitset<BitsPerCharacter> ManipulatedDataBitset[FileDataMemoryMaxLines][MaxCharac
 //				File Systems:
 bool LoadConfiguration()
 {
-	fstream configFile ("config.txt", std::ios::in);
+	fstream configFile ("config.txt", ios::in);
 	bool fileStatusReturn = false;
 	if (configFile.good())
 	{
@@ -70,8 +75,9 @@ bool LoadConfiguration()
 
 bool LoadFile(string filePathInput)
 {
-	fstream dataFile (filePathInput, std::ios::in);
+	fstream dataFile (filePathInput, ios::in | ios::binary);
 	bool fileStatusReturn = false;
+	string tempNewLine = "\n";
 	if (dataFile.good())
 	{
 		fileStatusReturn = true;
@@ -82,17 +88,35 @@ bool LoadFile(string filePathInput)
 		}
 	}
 	dataFile.close();
-
 	return fileStatusReturn;
 }
 
-void SaveAlteredFile()
+void SaveAlteredFile( string filePathInput )
 {
+	string newFilePath;
 
+	if (( filePathInput.find( fileExtensionENC ) != -1) && ( filePathInput.length() - filePathInput.find( fileExtensionENC ) == fileExtensionENC.length()))
+	{
+		newFilePath = filePathInput.substr(0, filePathInput.find( fileExtensionENC ));
+	}
+	else
+	{
+		newFilePath = filePathInput.c_str() + fileExtensionENC;
+	}
 
+	fstream saveFile ( newFilePath, ios::out );
 
+	for ( size_t lineNum = 0; (lineNum <= FileDataActualLineCount); lineNum++)
+	{
+		for (size_t characterPos = 0; (characterPos < FileDataLineMemory[lineNum].length()); characterPos++)
+		{
+			saveFile << static_cast<char> ((ManipulatedDataBitset[lineNum][characterPos]).to_ulong());
+		}
+		//saveFile  << endl;
+	}
+
+	saveFile.close();
 }
-
 
 int RetrieveVarFromConfigINT(string varNameInFile)
 {
@@ -173,11 +197,11 @@ void FileToBinary()
 	}
 }
 
-void XOR_WithKey(bitset<BitsPerKey> keyBitset)
+void XOR_WithKey(bitset<BitsInKey> keyBitset)
 {
 	for ( size_t lineNum = 0; (lineNum <= FileDataActualLineCount); lineNum++)
 	{
-		for (size_t characterPos = 0; (characterPos <= FileDataLineMemory[lineNum].length()); characterPos++)
+		for (size_t characterPos = 0; (characterPos < FileDataLineMemory[lineNum].length()); characterPos++)
 		{
 			ManipulatedDataBitset[lineNum][characterPos] = NotManipulatedDataBitset[lineNum][characterPos] ^ keyBitset;
 		}
@@ -198,41 +222,48 @@ float EndTimer(clock_t clockTimeFromStartTimer)
 
 
 //				Boot Necesary Information:
-void BootSystem()
+bool BootSystem()
 {
+	// Some variables to represent the status of functions called in BootSystem()
+	bool subProgramStatusHealthy1 = true;
+	bool subProgramStatusHealthy2 = true;
+
 	// Pre-define the config memory to only search filled lines for variables
 	for (int configCount = 1; configCount < ConfigMemoryMaxLines; configCount++)
 	{
 		ConfigLineMemory[configCount] = nullString;
 	}
 
-	// Read the configuration file and save the data
-	LoadConfiguration();
+	// Read the configuration file and save the data, while checking if the action was successful
+	subProgramStatusHealthy1 = LoadConfiguration();
 	
-	
-	// Retrieve integers from Config
-	//		start_key_length
-	retrievedValueINT = RetrieveVarFromConfigINT("start_key_length"); if (retrievedValueINT != nullInt){ start_key_length = retrievedValueINT; }
-	//		key_expansion_enabled
-	retrievedValueINT = RetrieveVarFromConfigINT("key_expansion_enabled"); if (retrievedValueINT != nullInt){ key_expansion_enabled = retrievedValueINT; }
-	//		expanded_key_length
-	retrievedValueINT = RetrieveVarFromConfigINT("expanded_key_length"); if (retrievedValueINT != nullInt){ expanded_key_length = retrievedValueINT; }
-	//		key_expansion_method
-	retrievedValueINT = RetrieveVarFromConfigINT("key_expansion_method"); if (retrievedValueINT != nullInt){ key_expansion_method = retrievedValueINT; }
+	if (subProgramStatusHealthy1)
+	{
+		// Retrieve integers from Config
+		//		start_key_length
+		retrievedValueINT = RetrieveVarFromConfigINT("start_key_length"); if (retrievedValueINT != nullInt){ start_key_length = retrievedValueINT; }
+		//		key_expansion_enabled
+		retrievedValueINT = RetrieveVarFromConfigINT("key_expansion_enabled"); if (retrievedValueINT != nullInt){ key_expansion_enabled = retrievedValueINT; }
+		//		expanded_key_length
+		retrievedValueINT = RetrieveVarFromConfigINT("expanded_key_length"); if (retrievedValueINT != nullInt){ expanded_key_length = retrievedValueINT; }
+		//		key_expansion_method
+		retrievedValueINT = RetrieveVarFromConfigINT("key_expansion_method"); if (retrievedValueINT != nullInt){ key_expansion_method = retrievedValueINT; }
 
 
-	// Retrieve floats from Config
+		// Retrieve floats from Config
 
 
-	// Retrieve strings from Config
-	//		file_path
-	retrievedValueSTR = RetrieveVarFromConfigSTR("file_path"); if (retrievedValueSTR != nullString){ file_path = retrievedValueSTR.c_str(); }
-
+		// Retrieve strings from Config
+		//		file_path
+		retrievedValueSTR = RetrieveVarFromConfigSTR("file_path"); if (retrievedValueSTR != nullString){ file_path = retrievedValueSTR.c_str(); }
+	}
 
 	// Read the focus file and save the data
-	LoadFile(file_path);
+	subProgramStatusHealthy2 = LoadFile(file_path);
 
-
+	// Returns whether or not the entirety of BootSystem() was successful
+	if (subProgramStatusHealthy1 && subProgramStatusHealthy2) { return true; }
+	else { return false; }
 }
 
 
@@ -241,15 +272,21 @@ void BootSystem()
 //http://msdn.microsoft.com/en-us/library/3akey979.aspx
 //http://www.cplusplus.com/reference/bitset/bitset/hash/
 //http://www.cplusplus.com/reference/bitset/bitset/flip/
+//http://www.cplusplus.com/reference/cstdio/rename/
+//http://www.cplusplus.com/reference/cstdio/remove/
 
 
 int main()
 {
 		generalTimeRecord = StartTimer();
 
-	BootSystem();
+	if (programStatusHealthy)
+	{
+		programStatusHealthy = BootSystem();
+	}
 
-		printf("Boot system in %.3f seconds\n\n", EndTimer(generalTimeRecord));
+	
+		printf("Booted system in %.3f seconds\n\n", EndTimer(generalTimeRecord));
 		generalTimeRecord = StartTimer();
 
 	FileToBinary();
@@ -259,7 +296,7 @@ int main()
 
 	XOR_WithKey(123);
 
-	printf("%d", ManipulatedDataBitset[22][3]);
+	//printf("%d", ManipulatedDataBitset[22][3]);
 
 	//string bcd = "hi there, ";
 	//string bcc = "how are you?";
@@ -267,9 +304,19 @@ int main()
 	//printf("%s", (bcd.c_str() + bcc).c_str());                 <-- concatenation
 
 	//printf("%s", a.to_string());
-	///printf("%s", (a ^ b).to_string().c_str() );
+	//printf("%s", (a ^ b).to_string().c_str() );
+
+	SaveAlteredFile(file_path);
 
 
+	/*
+	for (int i = 0; i < 5; i++)
+	{
+		printf("%s\n", FileDataLineMemory[0].c_str());
+		printf("%d\n", NotManipulatedDataBitset[0][i]);
+		printf("%d\n", ManipulatedDataBitset[0][i]);
+	}
+	*/
 	cin.get();
 
 	return 0;
