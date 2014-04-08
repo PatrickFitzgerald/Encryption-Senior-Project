@@ -9,7 +9,7 @@
 File data:   --Must be set to manipulate the correct files. 
 			 --Must have file extension included.
 
-file_path = Colored Curves.ggb.enc
+file_path = testfile.txt
 
 
 Key length defaults:

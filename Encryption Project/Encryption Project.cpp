@@ -83,7 +83,8 @@ bool LoadFile(string filePathInput)
 		fileStatusReturn = true;
 		for (int lineNum = 0; ((!dataFile.eof()) && (lineNum < FileDataMemoryMaxLines)); lineNum++)
 		{
-			getline(dataFile, FileDataLineMemory[lineNum]);
+			//getline(dataFile, FileDataLineMemory[lineNum]);
+			dataFile>>FileDataLineMemory[lineNum];
 			FileDataActualLineCount = lineNum;
 		}
 	}
@@ -274,6 +275,9 @@ bool BootSystem()
 //http://www.cplusplus.com/reference/bitset/bitset/flip/
 //http://www.cplusplus.com/reference/cstdio/rename/
 //http://www.cplusplus.com/reference/cstdio/remove/
+//GET - http://stackoverflow.com/questions/17985320/reading-in-extended-ascii-with-cin-get
+//http://www.daniweb.com/software-development/c/threads/366962/reading-extended-ascii-characters
+//http://www.mobileread.com/forums/showthread.php?t=170409
 
 
 int main()
